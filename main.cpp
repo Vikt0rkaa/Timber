@@ -1,7 +1,19 @@
 #include <iostream>
 #include <sstream>
+#include <vector>
 #include <SFML/Graphics.hpp>
 using namespace sf;
+
+//	Function declaration
+void updateBranches(int seed);
+
+//	Make six branches
+const int NUM_BRANCHES = 6;
+std::vector<Sprite> branches;
+
+// Position of the player/branch
+enum class side { LEFT, RIGHT, NONE };
+side branchPositions[NUM_BRANCHES];
 
 int main() {
 	// Create a video mode object with the desired resolution
@@ -93,6 +105,7 @@ int main() {
 		return 1;
 	}
 
+	// Create two text objects to display the message and score
 	Text messageText(font);
 	Text scoreText(font);
 	messageText.setFont(font);
@@ -107,11 +120,27 @@ int main() {
 	messageText.setFillColor(Color::White);
 	scoreText.setFillColor(Color::White);
 
+	// Center the text on the screen
 	FloatRect textRect = messageText.getLocalBounds();
 	messageText.setOrigin({ textRect.position.x + textRect.size.x / 2.0f, textRect.position.y + textRect.size.y / 2.0f });
 	messageText.setPosition({1920 / 2.0f, 1080 / 2.0f});
 	scoreText.setPosition({ 20, 20 });
 
+	// Load a branch texture and create sprites for the branches
+	Texture textureBranch;
+	if (!textureBranch.loadFromFile("graphics/branch.png")) {
+		std::cout << "Error loading branch texture" << std::endl;
+		return 1;
+	}
+	for(int i=0;i<NUM_BRANCHES;i++) {
+		// Initialize the branches
+		branches.push_back(Sprite(textureBranch));
+		branches[i].setTexture(textureBranch);
+		branches[i].setPosition({-2000, -2000});
+		
+		// Set the origin of the sprite to the center of the texture
+		branches[i].setOrigin({220, 20});
+	}
 
 	while (window.isOpen()) {
 
@@ -232,6 +261,23 @@ int main() {
 			std::stringstream ss;
 			ss << "Score: " << score;
 			scoreText.setString(ss.str());
+
+			for (int i = 0; i < NUM_BRANCHES; i++) {
+				float height = i * 150;
+
+				if (branchPositions[i] == side::LEFT) {
+					branches[i].setPosition({ 610, height });
+					branches[i].setRotation(degrees(180));
+				}
+				else if (branchPositions[i] == side::RIGHT) {
+					branches[i].setPosition({ 1330, height });
+					branches[i].setRotation(degrees(0));
+				}
+				else {
+					// Hide the branch
+					branches[i].setPosition({ 3000, height });
+				}
+			}
 		}
 
 		window.clear();
@@ -239,6 +285,9 @@ int main() {
 		window.draw(spriteCloud1);
 		window.draw(spriteCloud2);
 		window.draw(spriteCloud3);
+		for(int i=0;i<NUM_BRANCHES;i++) {
+			window.draw(branches[i]);
+		}
 		window.draw(spriteTree);
 		window.draw(spriteBee);
 		window.draw(scoreText);
@@ -253,4 +302,26 @@ int main() {
 
 
 	return 0;
+}
+
+void updateBranches(int seed) {
+	for (int j = NUM_BRANCHES - 1;j > 0;j--) {
+		branchPositions[j] = branchPositions[j - 1];
+	}
+
+	srand((int)time(0) + seed);
+	int r = (rand() % 5);
+
+	switch (r){
+	case 0:
+		branchPositions[0] = side::LEFT;
+		break;
+	case 1:
+		branchPositions[0] = side::RIGHT;
+		break;
+	default:
+		branchPositions[0] = side::NONE;
+		break;
+	}
+	
 }
